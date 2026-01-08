@@ -23,7 +23,7 @@ const card = cva(
 export interface CardProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof card> {
-  children: ReactNode;
+  children?: ReactNode;
   title?: string;
   category?: string;
   badge?: "published" | "draft" | "scheduled";

@@ -87,10 +87,9 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { icon: "dashboard", label: "Dashboard", href: "/" },
-  { icon: "article", label: "Content", href: "#" },
+  { icon: "folder", label: "Projects", href: "/projects" },
+  { icon: "web", label: "Templates", href: "/templates" },
   { icon: "group", label: "Users", href: "/users" },
-  { icon: "bar_chart", label: "Analytics", href: "#" },
-  { icon: "design_services", label: "Design System", href: "#" },
 ];
 
 export interface SidebarProps

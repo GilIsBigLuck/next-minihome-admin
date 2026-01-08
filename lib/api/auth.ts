@@ -1,62 +1,38 @@
-const API_BASE_URL = "https://api.minihome.page/api";
+import {
+  API_BASE_URL,
+  type ApiResponse,
+  type LoginRequest,
+  type LoginResponse,
+  type RegisterRequest,
+  type RegisterResponse,
+  handleApiError,
+} from "./types";
 
-export interface LoginRequest {
-  username: string;
-  password: string;
-}
-
-export interface LoginResponse {
-  token?: string;
-  user?: {
-    email: string;
-    username: string;
-    displayName: string;
-  };
-  message?: string;
-}
-
-export interface RegisterRequest {
-  email: string;
-  username: string;
-  password: string;
-  displayName: string;
-}
-
-export interface RegisterResponse {
-  message?: string;
-  user?: {
-    email: string;
-    username: string;
-    displayName: string;
-  };
-}
+export type { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse };
 
 export const authApi = {
   login: async (data: LoginRequest): Promise<LoginResponse> => {
-    const response = await fetch(
-      `${API_BASE_URL}/auth/login?username=${encodeURIComponent(data.username)}&password=${encodeURIComponent(data.password)}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: data.username,
-          password: data.password,
-        }),
-      }
-    );
+    const response = await fetch(`${API_BASE_URL}/public/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: data.username,
+        password: data.password,
+      }),
+    });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: "Login failed" }));
-      throw new Error(error.message || "Login failed");
+      await handleApiError(response);
     }
 
-    return response.json();
+    const result: ApiResponse<LoginResponse> = await response.json();
+    return result.data;
   },
 
   register: async (data: RegisterRequest): Promise<RegisterResponse> => {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    const response = await fetch(`${API_BASE_URL}/public/auth/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -70,11 +46,10 @@ export const authApi = {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: "Registration failed" }));
-      throw new Error(error.message || "Registration failed");
+      await handleApiError(response);
     }
 
-    return response.json();
+    const result: ApiResponse<RegisterResponse> = await response.json();
+    return result.data;
   },
 };
-

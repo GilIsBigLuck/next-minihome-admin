@@ -6,20 +6,20 @@ const select = cva(
   "appearance-none w-full bg-white border text-black py-2.5 pl-4 pr-10 text-sm font-medium focus:outline-none cursor-pointer hover:bg-gray-50",
   {
     variants: {
-      error: {
+      hasError: {
         true: "border-red-500",
         false: "border-gray-200 focus:border-black",
       },
     },
     defaultVariants: {
-      error: false,
+      hasError: false,
     },
   }
 );
 
 export interface SelectProps
   extends SelectHTMLAttributes<HTMLSelectElement>,
-    VariantProps<typeof select> {
+    Omit<VariantProps<typeof select>, "hasError"> {
   label?: string;
   options: { value: string; label: string }[];
   error?: string;
@@ -41,7 +41,7 @@ export default function Select({
       )}
       <div className="relative max-w-xs">
         <select
-          className={clsx(select({ error: !!error }), className)}
+          className={clsx(select({ hasError: !!error }), className)}
           {...props}
         >
           {options.map((option) => (

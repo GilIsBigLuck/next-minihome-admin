@@ -10,21 +10,21 @@ const input = cva(
         true: "pl-8",
         false: "pl-3",
       },
-      error: {
+      hasError: {
         true: "border-red-500",
         false: "border-gray-200 focus:border-black",
       },
     },
     defaultVariants: {
       hasIcon: false,
-      error: false,
+      hasError: false,
     },
   }
 );
 
 export interface InputProps
   extends InputHTMLAttributes<HTMLInputElement>,
-    VariantProps<typeof input> {
+    Omit<VariantProps<typeof input>, "hasError"> {
   label?: string;
   icon?: string;
   error?: string;
@@ -57,7 +57,7 @@ export default function Input({
         )}
         <input
           className={clsx(
-            input({ hasIcon: !!icon, error: !!error }),
+            input({ hasIcon: !!icon, hasError: !!error }),
             className
           )}
           {...props}

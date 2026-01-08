@@ -7,4 +7,6 @@ export { default as Card } from "./Card";
 export { default as Pagination } from "./Pagination";
 export { default as NavigationTree } from "./NavigationTree";
 export { default as EmptyState } from "./EmptyState";
+export { default as Modal } from "./Modal";
+export { default as ConfirmDialog } from "./ConfirmDialog";
 

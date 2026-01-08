@@ -1,28 +1,23 @@
-const API_BASE_URL = "https://api.minihome.page/api";
+import {
+  API_BASE_URL,
+  type ApiResponse,
+  type User,
+  type UserStats,
+  type CreateUserRequest,
+  type UpdateUserRequest,
+  getAuthToken,
+  handleApiError,
+} from "./types";
 
-export interface User {
-  id: number;
-  email: string;
-  username: string;
-  displayName: string;
-  isApproved: boolean;
-  isMaster: boolean;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+export type { User, UserStats, CreateUserRequest, UpdateUserRequest };
 
 export interface UsersListResponse {
   users: User[];
+}
+
+export interface UsersListMeta {
   count: number;
-  stats: {
-    total: number;
-    approved: number;
-    pending: number;
-    active: number;
-    inactive: number;
-    master: number;
-  };
+  stats: UserStats;
 }
 
 export interface UsersListParams {
@@ -32,21 +27,22 @@ export interface UsersListParams {
   search?: string;
 }
 
-const getAuthToken = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("token");
+const getAuthHeaders = () => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("인증이 필요합니다.");
   }
-  return null;
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
 };
 
 export const usersApi = {
-  getUsersList: async (params?: UsersListParams): Promise<UsersListResponse> => {
-    const token = getAuthToken();
-    
-    if (!token) {
-      throw new Error("Authentication required");
-    }
-
+  // Get users list
+  getList: async (
+    params?: UsersListParams
+  ): Promise<{ users: User[]; count: number; stats: UserStats }> => {
     const queryParams = new URLSearchParams();
     if (params?.isApproved !== undefined) {
       queryParams.append("isApproved", params.isApproved.toString());
@@ -61,25 +57,122 @@ export const usersApi = {
       queryParams.append("search", params.search);
     }
 
-    const url = `${API_BASE_URL}/users/list${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+    const url = `${API_BASE_URL}/admin/users/list${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
 
     const response = await fetch(url, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error("Unauthorized. Please login again.");
-      }
-      const error = await response.json().catch(() => ({ message: "Failed to fetch users" }));
-      throw new Error(error.message || "Failed to fetch users");
+      await handleApiError(response);
     }
 
-    return response.json();
+    const result: ApiResponse<UsersListResponse> & { meta: UsersListMeta } =
+      await response.json();
+    return {
+      users: result.data.users,
+      count: result.meta.count,
+      stats: result.meta.stats,
+    };
+  },
+
+  // Get pending users
+  getPending: async (): Promise<{ users: User[]; count: number }> => {
+    const response = await fetch(`${API_BASE_URL}/admin/users/pending`, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      await handleApiError(response);
+    }
+
+    const result: ApiResponse<{ users: User[] }> & { meta: { count: number } } =
+      await response.json();
+    return {
+      users: result.data.users,
+      count: result.meta.count,
+    };
+  },
+
+  // Get single user
+  getById: async (id: number): Promise<User> => {
+    const response = await fetch(`${API_BASE_URL}/admin/users/${id}`, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      await handleApiError(response);
+    }
+
+    const result: ApiResponse<{ user: User }> = await response.json();
+    return result.data.user;
+  },
+
+  // Create user
+  create: async (data: CreateUserRequest): Promise<User> => {
+    const response = await fetch(`${API_BASE_URL}/admin/users`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      await handleApiError(response);
+    }
+
+    const result: ApiResponse<{ user: User }> = await response.json();
+    return result.data.user;
+  },
+
+  // Update user
+  update: async (id: number, data: UpdateUserRequest): Promise<User> => {
+    const response = await fetch(`${API_BASE_URL}/admin/users/${id}`, {
+      method: "PATCH",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      await handleApiError(response);
+    }
+
+    const result: ApiResponse<{ user: User }> = await response.json();
+    return result.data.user;
+  },
+
+  // Delete user
+  delete: async (id: number): Promise<User> => {
+    const response = await fetch(`${API_BASE_URL}/admin/users/${id}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      await handleApiError(response);
+    }
+
+    const result: ApiResponse<{ user: User }> = await response.json();
+    return result.data.user;
+  },
+
+  // Approve user
+  approve: async (id: number): Promise<User> => {
+    const response = await fetch(`${API_BASE_URL}/admin/users/${id}/approve`, {
+      method: "PATCH",
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      await handleApiError(response);
+    }
+
+    const result: ApiResponse<{ user: User }> = await response.json();
+    return result.data.user;
   },
 };
 
+// Legacy export for backwards compatibility
+export const getUsersList = usersApi.getList;
